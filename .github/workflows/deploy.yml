@@ -1,0 +1,43 @@
+name: Static Website Deployment Pipeline
+
+on:
+  push:
+    branches:
+      - main # or your desired branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Checkout Code
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Run Validation (HTMLHint, CSSLint)
+      - name: Install HTMLHint and CSSLint
+        run: |
+          npm install -g htmlhint csslint
+
+      - name: Run HTMLHint
+        run: htmlhint **/*.html
+
+      - name: Run CSSLint
+        run: csslint **/*.css
+
+      # Package the files into a zip
+      - name: Package files into a zip
+        run: |
+          zip -r website.zip .
+
+      # Deploy to the server using SCP
+      - name: Deploy via SCP
+        run: |
+          scp -i ${{ secrets.SSH_PRIVATE_KEY }} website.zip username@server:/path/to/deployment/folder
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      # Send Email Notification (using a service like SendGrid or SMTP)
+      - name: Send Deployment Notification
+        run: |
+          echo "Subject: Deployment Successful\n\nThe website has been successfully deployed: http://server_link.com" | sendmail -S smtp.example.com -f from@example.com -t to@example.com
