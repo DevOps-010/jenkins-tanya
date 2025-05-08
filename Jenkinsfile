@@ -1,75 +1,37 @@
 pipeline {
     agent any
-
-    environment {
-        DEPLOY_USER = 'username'
-        DEPLOY_HOST = 'server'
-        DEPLOY_PATH = '/path/to/deployment/folder'
-        SITE_URL = 'http://server_link.com'
-        SSH_KEY = credentials('SSH_PRIVATE_KEY') // Assumes this is stored in Jenkins Credentials
+    triggers {
+        cron('H 3 * * *')  // Trigger the build daily at 3 AM
     }
-
     stages {
-        stage('Checkout') {
+        stage('Checkout & Build') {
             steps {
-                git branch: 'main', url: 'https://github.com/DevOps-010/jenkins-tanya'
+                echo 'Checking out the repository and building the project...'
+                // Add your actual build command here
             }
         }
-
-        stage('Install Linters') {
+        stage('Test') {
             steps {
-                sh 'npm install -g htmlhint csslint'
+                echo 'Running the full suite of tests...'
+                // Add your actual test command here
             }
         }
-
-        stage('Run HTMLHint') {
+        stage('Archive') {
             steps {
-                sh 'htmlhint **/*.html || true'
+                echo 'Archiving build and test results...'
+                // Add archiving commands here if needed
             }
         }
-
-        stage('Run CSSLint') {
+        stage('Report') {
             steps {
-                sh 'csslint **/*.css || true'
-            }
-        }
-
-        stage('Package Files') {
-            steps {
-                sh 'zip -r website.zip .'
-            }
-        }
-
-        stage('Deploy to Server') {
-            steps {
-                sh '''
-                echo "$SSH_KEY" > id_rsa
-                chmod 600 id_rsa
-                scp -i id_rsa -o StrictHostKeyChecking=no website.zip $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
-                rm id_rsa
-                '''
-            }
-        }
-
-        stage('Notify') {
-            steps {
-                echo "Deployment successful! Website available at $SITE_URL"
-                // Optional: Email notification
-                // mail to: 'to@example.com',
-                //      subject: "Deployment Successful",
-                //      body: "The website has been deployed to $SITE_URL"
+                echo 'Sending email with build result summary...'
+                // Add email sending command here
             }
         }
     }
-
     post {
-        failure {
-            echo 'Build failed!'
-            // Optional: Email notification on failure
-            // mail to: 'to@example.com',
-            //      subject: "Deployment Failed",
-            //      body: "The deployment failed. Please check Jenkins logs."
+        always {
+            echo 'Pipeline completed.'
         }
     }
 }
-
